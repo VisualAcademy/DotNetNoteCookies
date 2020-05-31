@@ -24,8 +24,8 @@ namespace DotNetNote
         {
             services.AddControllersWithViews();
 
-            ////[!] Configuration: JSON 파일의 데이터를 POCO 클래스에 주입
-            //services.Configure<DotNetNoteSettings>(Configuration.GetSection("DotNetNoteSettings"));
+            //[!] Configuration: JSON 파일의 데이터를 POCO 클래스에 주입
+            services.Configure<DotNetNoteSettings>(Configuration.GetSection("DotNetNoteSettings"));
 
             services.AddAuthentication("Cookies")
                 .AddCookie(options =>
@@ -60,6 +60,17 @@ namespace DotNetNote
             services.AddTransient<ILoginFailedManager, LoginFailedManager>();
             // 사용자 정보 보기 전용 컴포넌트
             services.AddTransient<IUserModelRepository, UserModelRepository>();
+
+            //[User][9] Policy 설정
+            services.AddAuthorization(options =>
+            {
+                // Users Role이 있으면, Users Policy 부여
+                options.AddPolicy("Users", policy => policy.RequireRole("Users"));
+
+                // Users Role이 있고 UserId가 DotNetNoteSettings:SiteAdmin에 지정된 값(예를 들어 "Admin")이면 "Administrators" 부여
+                // "UserId" - 대소문자 구분
+                options.AddPolicy("Administrators", policy => policy.RequireRole("Users").RequireClaim("UserId", Configuration.GetSection("DotNetNoteSettings").GetSection("SiteAdmin").Value));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
