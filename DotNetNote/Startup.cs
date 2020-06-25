@@ -19,14 +19,15 @@ namespace DotNetNote
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
 
             //[!] Configuration: JSON 파일의 데이터를 POCO 클래스에 주입
-            services.Configure<DotNetNoteSettings>(Configuration.GetSection("DotNetNoteSettings"));
+            services.Configure<DotNetNoteSettings>(
+                Configuration.GetSection("DotNetNoteSettings"));
 
+            // 쿠키 인증 적용 최소한의 코드 
             services.AddAuthentication("Cookies")
                 .AddCookie(options =>
                 {
@@ -67,13 +68,16 @@ namespace DotNetNote
                 // Users Role이 있으면, Users Policy 부여
                 options.AddPolicy("Users", policy => policy.RequireRole("Users"));
 
-                // Users Role이 있고 UserId가 DotNetNoteSettings:SiteAdmin에 지정된 값(예를 들어 "Admin")이면 "Administrators" 부여
+                // Users Role이 있고 UserId가 DotNetNoteSettings:SiteAdmin에 
+                // 지정된 값(예를 들어 "Admin")이면 "Administrators" 부여
                 // "UserId" - 대소문자 구분
-                options.AddPolicy("Administrators", policy => policy.RequireRole("Users").RequireClaim("UserId", Configuration.GetSection("DotNetNoteSettings").GetSection("SiteAdmin").Value));
+                options.AddPolicy("Administrators", policy => 
+                    policy.RequireRole("Users").RequireClaim("UserId", 
+                        Configuration.GetSection("DotNetNoteSettings")
+                            .GetSection("SiteAdmin").Value));
             });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -83,7 +87,6 @@ namespace DotNetNote
             else
             {
                 app.UseExceptionHandler("/Home/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
             app.UseHttpsRedirection();
